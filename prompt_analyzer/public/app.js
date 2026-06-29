@@ -931,9 +931,9 @@ try {
     document.getElementById('overall-score-pct').innerText = `0%`;
     
     // Report text default
-    document.getElementById('report-clarity').innerText = 'Submit prompt text for evaluation...';
-    document.getElementById('report-grammar').innerText = 'Submit prompt text for evaluation...';
-    document.getElementById('report-optimization').innerText = 'Submit prompt text for evaluation...';
+    document.getElementById('report-clarity').innerHTML = '<span class="block text-slate-400 mb-1 font-semibold">CLARITY</span>Write your prompt above and click Analyze to see clarity feedback.';
+    document.getElementById('report-grammar').innerHTML = '<span class="block text-slate-400 mb-1 font-semibold">GRAMMAR</span>Grammar and structure analysis will appear here after evaluation.';
+    document.getElementById('report-optimization').innerHTML = '<span class="block text-slate-400 mb-1 font-semibold">OPTIMIZATION</span>Get tips on how to make your prompt more effective for AI models.';
     
     document.getElementById('diagnostics-workspace-title').innerText = "AI Diagnostics Workspace";
   }
@@ -1013,9 +1013,9 @@ function runLiveAnalysis(text) {
     : '✓ Optimization Complete';
 
   // Report recommendations
-  document.getElementById('report-clarity').innerHTML = `<strong>Clarity:</strong> ${analysis.suggestions.clarity}`;
-  document.getElementById('report-grammar').innerHTML = `<strong>Grammar:</strong> ${analysis.suggestions.grammar}`;
-  document.getElementById('report-optimization').innerHTML = `<strong>Optimization:</strong> ${analysis.suggestions.optimization}`;
+  document.getElementById('report-clarity').innerHTML = `<span class="block text-slate-400 mb-1 font-semibold">CLARITY</span>${analysis.suggestions.clarity}`;
+  document.getElementById('report-grammar').innerHTML = `<span class="block text-slate-400 mb-1 font-semibold">GRAMMAR</span>${analysis.suggestions.grammar}`;
+  document.getElementById('report-optimization').innerHTML = `<span class="block text-slate-400 mb-1 font-semibold">OPTIMIZATION</span>${analysis.suggestions.optimization}`;
 
   return analysis;
 }
@@ -1053,9 +1053,9 @@ async function clickAnalyze() {
         const pb = document.getElementById('overall-progress-bar');
         pb.className = 'h-2 rounded-full transition-all duration-500 ';
         pb.className += overall > 75 ? 'bg-[#10B981]' : overall >= 50 ? 'bg-[#F59E0B]' : 'bg-[#EF4444]';
-        document.getElementById('report-clarity').innerHTML = `<strong>Clarity:</strong> ${a.clarity_suggestions}`;
-        document.getElementById('report-grammar').innerHTML = `<strong>Grammar:</strong> ${a.grammar_suggestions}`;
-        document.getElementById('report-optimization').innerHTML = `<strong>Optimization:</strong> ${a.optimization_suggestions}`;
+        document.getElementById('report-clarity').innerHTML = `<span class="block text-slate-400 mb-1 font-semibold">CLARITY</span>${a.clarity_suggestions || 'Good clarity and specificity.'}`;
+        document.getElementById('report-grammar').innerHTML = `<span class="block text-slate-400 mb-1 font-semibold">GRAMMAR</span>${a.grammar_suggestions || 'Clean grammar and structure.'}`;
+        document.getElementById('report-optimization').innerHTML = `<span class="block text-slate-400 mb-1 font-semibold">OPTIMIZATION</span>${a.optimization_suggestions || 'Well-optimized for AI models.'}`;
         document.getElementById('check-ready').innerHTML = overall > 75 ? '✓ Ready for AI Generation' : '✗ Insufficient Telemetry Metrics';
         document.getElementById('check-quality').innerHTML = overall > 85 ? '✓ High Quality Prompt' : '✗ Needs Performance Tuning';
         document.getElementById('check-improvements').innerHTML = overall < 90 ? '⚠ Minor Improvement Suggested' : '✓ Optimization Complete';
@@ -1434,7 +1434,19 @@ async function cloneTemplate(templateId) {
         });
         const data = await response.json();
         if (data.success) {
-            alert('Template cloned! Opening in Prompts workspace...');
+            const prompt = data.prompt;
+            const cats = db.tables.categories;
+            const cat = cats.find(c => c.category_name === prompt.category);
+            const categoryId = cat ? cat.category_id : 1;
+
+            state.editingPrompt = {
+                prompt_id: prompt.id,
+                title: prompt.title.replace(' (cloned)', ''),
+                category_id: categoryId,
+                current_prompt_text: prompt.prompt_text,
+                user_id: state.currentUser.user_id
+            };
+
             navigateTo('/prompts');
         }
     } catch (err) {
