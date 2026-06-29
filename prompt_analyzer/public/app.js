@@ -729,73 +729,126 @@ function switchTab(tab) {
 // 5. RENDERING: DASHBOARD
 // ============================================================================
 
-function renderDashboard() {
-  const userId = state.currentUser.user_id;
+async function renderDashboard() {
+  const token = localStorage.getItem('token');
 
-  // Filter records by tenant identity (FR1: Multi-Tenant Security)
-  const userPrompts = db.tables.prompts.filter(p => p.user_id === userId);
-  const totalPromptsCount = userPrompts.length;
-
-  const favCount = db.tables.favorites.filter(f => f.user_id === userId).length;
-
-  // AI Improvements = total counts in prompt_history where version_number > 1
-  let improvementsCount = 0;
-  userPrompts.forEach(p => {
-    const history = db.tables.prompt_history.filter(h => h.prompt_id === p.prompt_id);
-    if (history.length > 1) {
-      improvementsCount += (history.length - 1);
+  if (token) {
+    try {
+      const response = await fetch('/api/prompts', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (data.success && data.prompts) {
+        _renderDashboardFromAPI(data.prompts);
+        return;
+      }
+    } catch (err) {
+      console.error('API fetch failed, using local data:', err.message);
     }
-  });
+  }
 
-  // Calculate average quality score
+  const userId = state.currentUser.user_id;
+  const userPrompts = db.tables.prompts.filter(p => p.user_id === userId);
+  _renderDashboardLocal(userPrompts);
+}
+
+function _renderDashboardFromAPI(prompts) {
+  const totalPromptsCount = prompts.length;
+  const favCount = prompts.filter(p => p.is_favorite).length;
+  let improvementsCount = 0;
   let totalScore = 0;
   let scoreCount = 0;
-  userPrompts.forEach(p => {
-    const analysis = db.tables.ai_analysis.find(a => a.prompt_id === p.prompt_id);
-    if (analysis) {
-      const avg = Math.round((analysis.clarity_score + analysis.grammar_score + analysis.optimization_score) / 3);
+
+  prompts.forEach(p => {
+    const vc = p.version_count || 0;
+    if (vc > 1) improvementsCount += (vc - 1);
+    if (p.clarity_score || p.grammar_score || p.optimization_score) {
+      const avg = Math.round((p.clarity_score + p.grammar_score + p.optimization_score) / 3);
       totalScore += avg;
       scoreCount++;
     }
   });
+
   const avgQuality = scoreCount > 0 ? Math.round(totalScore / scoreCount) : 0;
 
-  // Write stats
   document.getElementById('stat-total-prompts').innerText = totalPromptsCount;
   document.getElementById('stat-favorites').innerText = favCount;
   document.getElementById('stat-improvements').innerText = improvementsCount;
   document.getElementById('stat-avg-score').innerText = `${avgQuality}%`;
 
-  // Render recent prompts table
   const tbody = document.getElementById('recent-prompts-tbody');
   tbody.innerHTML = '';
 
-  if (userPrompts.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="4" class="text-center py-8 text-slate-400 text-sm">
-          No prompts found. Click "+ New Prompt" to create one in the AI Diagnostics Workspace!
-        </td>
-      </tr>
-    `;
+  if (prompts.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-slate-400 text-sm">No prompts found. Click "+ New Prompt" to create one!</td></tr>`;
     return;
   }
 
+  prompts.forEach(p => {
+    const scoreVal = Math.round((p.clarity_score + p.grammar_score + p.optimization_score) / 3);
+    let scoreColorClass = scoreVal > 75 ? 'text-green-400' : scoreVal >= 50 ? 'text-amber-400' : 'text-red-400';
+
+    const catIds = db.tables.categories;
+    const cat = catIds.find(c => c.category_name === p.category);
+    const catName = cat ? cat.category_name : p.category;
+
+    const tr = document.createElement('tr');
+    tr.className = 'border-b border-[#3b378c]/30 hover:bg-[#25235c]/30 transition duration-150 text-sm';
+    tr.innerHTML = `
+      <td class="py-3.5 px-4 font-medium text-white flex items-center gap-2">
+        <button onclick="toggleFavoriteState(${p.id})" class="focus:outline-none transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ${p.is_favorite ? 'text-amber-400 fill-current' : 'text-slate-400 hover:text-white'}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.907c.961 0 1.36 1.252.584 1.831l-3.97 2.883a1 1 0 00-.364 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.971-2.883a1 1 0 00-1.18 0l-3.97 2.883c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.364-1.118L2.98 10.122c-.776-.579-.377-1.831.582-1.831h4.907a1 1 0 00.95-.69L11.05 2.928z"/></svg>
+        </button>
+        <span class="truncate max-w-[200px]" title="${p.title}">${p.title}</span>
+      </td>
+      <td class="py-3.5 px-4 text-slate-300">${catName}</td>
+      <td class="py-3.5 px-4 font-bold ${scoreColorClass}">${scoreVal}</td>
+      <td class="py-3.5 px-4 flex gap-2">
+        <button onclick="loadPromptForEdit('${p.id}')" class="bg-indigo-900/40 border border-indigo-500/50 hover:bg-indigo-800 text-indigo-200 text-xs px-2.5 py-1 rounded transition">Edit</button>
+        <button onclick="viewPromptTimeline('${p.id}')" class="bg-[#131138] border border-[#3b378c] hover:bg-[#25235c] text-slate-300 text-xs px-2.5 py-1 rounded transition">History</button>
+        <button onclick="deletePromptItem(${p.id})" class="bg-red-950/40 border border-red-500/50 hover:bg-red-900 text-red-200 text-xs px-2.5 py-1 rounded transition">Delete</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function _renderDashboardLocal(userPrompts) {
+  const totalPromptsCount = userPrompts.length;
+  const userId = state.currentUser.user_id;
+  const favCount = db.tables.favorites.filter(f => f.user_id === userId).length;
+  let improvementsCount = 0;
+  userPrompts.forEach(p => {
+    const history = db.tables.prompt_history.filter(h => h.prompt_id === p.prompt_id);
+    if (history.length > 1) improvementsCount += (history.length - 1);
+  });
+  let totalScore = 0, scoreCount = 0;
+  userPrompts.forEach(p => {
+    const analysis = db.tables.ai_analysis.find(a => a.prompt_id === p.prompt_id);
+    if (analysis) {
+      totalScore += Math.round((analysis.clarity_score + analysis.grammar_score + analysis.optimization_score) / 3);
+      scoreCount++;
+    }
+  });
+  const avgQuality = scoreCount > 0 ? Math.round(totalScore / scoreCount) : 0;
+
+  document.getElementById('stat-total-prompts').innerText = totalPromptsCount;
+  document.getElementById('stat-favorites').innerText = favCount;
+  document.getElementById('stat-improvements').innerText = improvementsCount;
+  document.getElementById('stat-avg-score').innerText = `${avgQuality}%`;
+
+  const tbody = document.getElementById('recent-prompts-tbody');
+  tbody.innerHTML = '';
+  if (userPrompts.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-slate-400 text-sm">No prompts found.</td></tr>`;
+    return;
+  }
   userPrompts.forEach(p => {
     const category = db.tables.categories.find(c => c.category_id === Number(p.category_id));
     const catName = category ? category.category_name : 'General';
-
     const analysis = db.tables.ai_analysis.find(a => a.prompt_id === p.prompt_id);
     const scoreVal = analysis ? Math.round((analysis.clarity_score + analysis.grammar_score + analysis.optimization_score) / 3) : 0;
-
-    // Semantic color codes matching tokens
-    let scoreColorClass = 'text-green-400';
-    if (scoreVal < 50) {
-      scoreColorClass = 'text-red-400';
-    } else if (scoreVal <= 75) {
-      scoreColorClass = 'text-amber-400';
-    }
-
+    let scoreColorClass = scoreVal > 75 ? 'text-green-400' : scoreVal >= 50 ? 'text-amber-400' : 'text-red-400';
     const tr = document.createElement('tr');
     tr.className = 'border-b border-[#3b378c]/30 hover:bg-[#25235c]/30 transition duration-150 text-sm';
     tr.innerHTML = `
@@ -808,7 +861,7 @@ function renderDashboard() {
       <td class="py-3.5 px-4 text-slate-300">${catName}</td>
       <td class="py-3.5 px-4 font-bold ${scoreColorClass}">${scoreVal}</td>
       <td class="py-3.5 px-4 flex gap-2">
-        <button onclick="loadPromptForEdit('${p.prompt_id}')" class="bg-indigo-900/40 border border-indigo-500/50 hover:bg-indigo-800 text-indigo-200 text-xs px-2.5 py-1 rounded transition">More</button>
+        <button onclick="loadPromptForEdit('${p.prompt_id}')" class="bg-indigo-900/40 border border-indigo-500/50 hover:bg-indigo-800 text-indigo-200 text-xs px-2.5 py-1 rounded transition">Edit</button>
         <button onclick="viewPromptTimeline('${p.prompt_id}')" class="bg-[#131138] border border-[#3b378c] hover:bg-[#25235c] text-slate-300 text-xs px-2.5 py-1 rounded transition">History</button>
         <button onclick="deletePromptItem('${p.prompt_id}')" class="bg-red-950/40 border border-red-500/50 hover:bg-red-900 text-red-200 text-xs px-2.5 py-1 rounded transition">Delete</button>
       </td>
@@ -818,24 +871,26 @@ function renderDashboard() {
 }
 
 function toggleFavoriteState(promptId) {
-  const promptIdx = db.tables.prompts.findIndex(p => p.prompt_id === promptId);
-  if (promptIdx === -1) return;
-
-  const prompt = db.tables.prompts[promptIdx];
-  const userId = state.currentUser.user_id;
-
-  if (prompt.is_favorite) {
-    prompt.is_favorite = false;
-    db.tables.favorites = db.tables.favorites.filter(f => !(f.user_id === userId && f.prompt_id === promptId));
-  } else {
-    prompt.is_favorite = true;
-    db.tables.favorites.push({
-      favorite_id: generateUUID(),
-      user_id: userId,
-      prompt_id: promptId,
-      bookmarked_at: new Date().toISOString()
-    });
+  const token = localStorage.getItem('token');
+  if (token) {
+    fetch(`/api/prompts/${promptId}/favorite`, {
+      method: 'PATCH',
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) renderDashboard();
+    })
+    .catch(err => console.error('Favorite toggle failed:', err));
   }
+
+  const promptIdx = db.tables.prompts.findIndex(p => p.prompt_id === promptId);
+  if (promptIdx !== -1) {
+    const prompt = db.tables.prompts[promptIdx];
+    prompt.is_favorite = !prompt.is_favorite;
+    db.save();
+  }
+}
 
   db.save();
 
@@ -850,22 +905,63 @@ function toggleFavoriteState(promptId) {
   renderDashboard();
 }
 
-function deletePromptItem(promptId) {
-  if (confirm("Are you sure you want to delete this prompt and all its version history & analysis data? This action mimics a CASCADE referential delete.")) {
-    db.tables.prompts = db.tables.prompts.filter(p => p.prompt_id !== promptId);
-    db.tables.prompt_history = db.tables.prompt_history.filter(h => h.prompt_id !== promptId);
-    db.tables.ai_analysis = db.tables.ai_analysis.filter(a => a.prompt_id !== promptId);
-    db.tables.favorites = db.tables.favorites.filter(f => f.prompt_id !== promptId);
+async function deletePromptItem(promptId) {
+  if (!confirm("Delete this prompt and all its version history?")) return;
 
-    db.save();
-
-    const token = localStorage.getItem('token');
-    if (token) {
-      fetch(`/api/prompts/${promptId}`, {
+  const token = localStorage.getItem('token');
+  if (token) {
+    try {
+      await fetch(`/api/prompts/${promptId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
-      }).catch(err => console.error('Delete sync failed:', err.message));
+      });
+    } catch (err) {
+      console.error('Delete API failed:', err);
     }
+  }
+
+  db.tables.prompts = db.tables.prompts.filter(p => p.prompt_id !== String(promptId));
+  db.tables.prompt_history = db.tables.prompt_history.filter(h => h.prompt_id !== String(promptId));
+  db.tables.ai_analysis = db.tables.ai_analysis.filter(a => a.prompt_id !== String(promptId));
+  db.tables.favorites = db.tables.favorites.filter(f => f.prompt_id !== String(promptId));
+  db.save();
+
+  renderDashboard();
+}
+
+async function loadPromptForEdit(promptId) {
+  const token = localStorage.getItem('token');
+  if (token) {
+    try {
+      const response = await fetch(`/api/prompts/${promptId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (data.success && data.prompt) {
+        const p = data.prompt;
+        const cats = db.tables.categories;
+        const cat = cats.find(c => c.category_name === p.category);
+        state.editingPrompt = {
+          prompt_id: p.id.toString(),
+          title: p.title,
+          category_id: cat ? cat.category_id : 1,
+          current_prompt_text: p.prompt_text,
+          user_id: state.currentUser.user_id
+        };
+        switchTab('diagnostics');
+        return;
+      }
+    } catch (err) {
+      console.error('Load prompt failed:', err);
+    }
+  }
+
+  const prompt = db.tables.prompts.find(p => p.prompt_id === String(promptId));
+  if (prompt) {
+    state.editingPrompt = prompt;
+    switchTab('diagnostics');
+  }
+}
 
     renderDashboard();
   }
@@ -1252,27 +1348,41 @@ function clickExport() {
 // 7. RENDERING: VERSION CONTROL TIMELINE
 // ============================================================================
 
-function viewPromptTimeline(promptId) {
+async function viewPromptTimeline(promptId) {
   state.activePromptId = promptId;
-  
-  const prompt = db.tables.prompts.find(p => p.prompt_id === promptId);
+
+  let prompt = db.tables.prompts.find(p => p.prompt_id === String(promptId));
+
+  if (!prompt) {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const resp = await fetch(`/api/prompts/${promptId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await resp.json();
+        if (data.success && data.prompt) {
+          prompt = { prompt_id: String(data.prompt.id), title: data.prompt.title, current_prompt_text: data.prompt.prompt_text };
+        }
+      } catch (e) {}
+    }
+  }
+
   if (!prompt) return;
 
-  // Switch tab visually but don't clear sidebar selection
-  document.getElementById('view-dashboard').classList.add('hidden');
-  document.getElementById('view-diagnostics').classList.add('hidden');
-  document.getElementById('view-sqlconsole').classList.add('hidden');
+  hideAllViews();
   document.getElementById('view-timeline').classList.remove('hidden');
-
   document.getElementById('timeline-prompt-title').innerText = prompt.title;
 
   const listContainer = document.getElementById('timeline-history-list');
   listContainer.innerHTML = '';
 
-  // Get chronological history (SELECT ordered by version_number ASC) (FR5)
   const history = db.tables.prompt_history
-    .filter(h => h.prompt_id === promptId)
+    .filter(h => h.prompt_id === String(promptId))
     .sort((a, b) => a.version_number - b.version_number);
+
+  if (history.length === 0) {
+    listContainer.innerHTML = `<div class="text-center text-slate-400 py-8">No version history yet. Edit a prompt to create its first version.</div>`;
+    return;
+  }
 
   history.forEach((h, idx) => {
     const isEven = idx % 2 === 0;

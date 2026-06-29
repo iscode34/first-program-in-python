@@ -179,7 +179,11 @@ exports.getPrompts = async (req, res) => {
             `SELECT p.*, 
                     COALESCE(a.clarity_score, 0) AS clarity_score,
                     COALESCE(a.grammar_score, 0) AS grammar_score,
-                    COALESCE(a.optimization_score, 0) AS optimization_score
+                    COALESCE(a.optimization_score, 0) AS optimization_score,
+                    COALESCE(a.clarity_suggestions, '') AS clarity_suggestions,
+                    COALESCE(a.grammar_suggestions, '') AS grammar_suggestions,
+                    COALESCE(a.optimization_suggestions, '') AS optimization_suggestions,
+                    (SELECT COUNT(*) FROM prompt_history WHERE prompt_id = p.id)::int AS version_count
              FROM prompts p
              LEFT JOIN ai_analysis a ON a.prompt_id = p.id AND a.id = (
                  SELECT id FROM ai_analysis WHERE prompt_id = p.id ORDER BY created_at DESC LIMIT 1
