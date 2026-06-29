@@ -896,19 +896,6 @@ function toggleFavoriteState(promptId) {
   }
 }
 
-  db.save();
-
-  const token = localStorage.getItem('token');
-  if (token) {
-    fetch(`/api/prompts/${promptId}/favorite`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
-    }).catch(err => console.error('Favorite sync failed:', err.message));
-  }
-
-  renderDashboard();
-}
-
 async function deletePromptItem(promptId) {
   if (!confirm("Delete this prompt and all its version history?")) return;
 
@@ -964,10 +951,6 @@ async function loadPromptForEdit(promptId) {
   if (prompt) {
     state.editingPrompt = prompt;
     switchTab('diagnostics');
-  }
-}
-
-    renderDashboard();
   }
 }
 
