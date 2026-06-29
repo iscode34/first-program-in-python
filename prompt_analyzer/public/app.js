@@ -922,6 +922,7 @@ async function deletePromptItem(promptId) {
 
 async function loadPromptForEdit(promptId) {
   const token = localStorage.getItem('token');
+
   if (token) {
     try {
       const response = await fetch(`/api/prompts/${promptId}`, {
@@ -939,18 +940,20 @@ async function loadPromptForEdit(promptId) {
           current_prompt_text: p.prompt_text,
           user_id: state.currentUser.user_id
         };
-        switchTab('diagnostics');
+        state.activePromptId = p.id;
+        navigateTo('/prompts');
         return;
       }
     } catch (err) {
-      console.error('Load prompt failed:', err);
+      console.error('Load prompt from API failed:', err);
     }
   }
 
   const prompt = db.tables.prompts.find(p => p.prompt_id === String(promptId));
   if (prompt) {
     state.editingPrompt = prompt;
-    switchTab('diagnostics');
+    state.activePromptId = prompt.prompt_id;
+    navigateTo('/prompts');
   }
 }
 
