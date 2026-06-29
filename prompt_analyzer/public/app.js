@@ -515,7 +515,7 @@ function renderAuthView(view) {
           </div>
           <button type="submit" class="w-full bg-[#4F46E5] hover:bg-[#6366F1] text-white font-semibold text-sm py-2.5 rounded transition duration-200">Sign In</button>
         </form>
-        <p class="text-xs text-slate-400 text-center mt-6">Don't have an account? <a href="#" onclick="renderAuthView('signup')" class="text-indigo-400 hover:underline">Create Account</a></p>
+        <p class="text-xs text-slate-400 text-center mt-6">Don't have an account? <a href="javascript:void(0)" onclick="renderAuthView('signup');return false;" class="text-indigo-400 hover:underline cursor-pointer">Create Account</a></p>
       </div>
     `;
     
@@ -557,7 +557,7 @@ function renderAuthView(view) {
           </div>
           <button type="submit" class="w-full bg-[#4F46E5] hover:bg-[#6366F1] text-white font-semibold text-sm py-2.5 rounded transition duration-200">Create Account</button>
         </form>
-        <p class="text-xs text-slate-400 text-center mt-6">Already have an account? <a href="#" onclick="renderAuthView('signin')" class="text-indigo-400 hover:underline">Sign In</a></p>
+        <p class="text-xs text-slate-400 text-center mt-6">Already have an account? <a href="javascript:void(0)" onclick="renderAuthView('signin');return false;" class="text-indigo-400 hover:underline cursor-pointer">Sign In</a></p>
       </div>
     `;
     
