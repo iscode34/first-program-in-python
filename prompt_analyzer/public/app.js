@@ -796,6 +796,9 @@ function _renderDashboardFromAPI(prompts) {
     const cat = catIds.find(c => c.category_name === p.category);
     const catName = cat ? cat.category_name : p.category;
 
+    window._promptCache = window._promptCache || {};
+    window._promptCache[p.id] = p;
+
     const tr = document.createElement('tr');
     tr.className = 'border-b border-[#3b378c]/30 hover:bg-[#25235c]/30 transition duration-150 text-sm';
     tr.innerHTML = `
@@ -808,7 +811,7 @@ function _renderDashboardFromAPI(prompts) {
       <td class="py-3.5 px-4 text-slate-300">${catName}</td>
       <td class="py-3.5 px-4 font-bold ${scoreColorClass}">${scoreVal}</td>
       <td class="py-3.5 px-4 flex gap-2">
-        <button onclick="loadPromptForEdit('${p.id}')" class="bg-indigo-900/40 border border-indigo-500/50 hover:bg-indigo-800 text-indigo-200 text-xs px-2.5 py-1 rounded transition">Edit</button>
+        <button onclick="editPromptFromCache(${p.id})" class="bg-indigo-900/40 border border-indigo-500/50 hover:bg-indigo-800 text-indigo-200 text-xs px-2.5 py-1 rounded transition">Edit</button>
         <button onclick="viewPromptTimeline('${p.id}')" class="bg-[#131138] border border-[#3b378c] hover:bg-[#25235c] text-slate-300 text-xs px-2.5 py-1 rounded transition">History</button>
         <button onclick="deletePromptItem(${p.id})" class="bg-red-950/40 border border-red-500/50 hover:bg-red-900 text-red-200 text-xs px-2.5 py-1 rounded transition">Delete</button>
       </td>
@@ -920,6 +923,25 @@ async function deletePromptItem(promptId) {
   renderDashboard();
 }
 
+function editPromptFromCache(id) {
+  const p = window._promptCache && window._promptCache[id];
+  if (!p) {
+    loadPromptForEdit(id);
+    return;
+  }
+  const cats = db.tables.categories;
+  const cat = cats.find(c => c.category_name === p.category);
+  state.editingPrompt = {
+    prompt_id: String(p.id),
+    title: p.title,
+    category_id: cat ? cat.category_id : 1,
+    current_prompt_text: p.prompt_text,
+    user_id: state.currentUser.user_id
+  };
+  state.activePromptId = p.id;
+  navigateTo('/prompts');
+}
+
 async function loadPromptForEdit(promptId) {
   const token = localStorage.getItem('token');
 
@@ -934,7 +956,7 @@ async function loadPromptForEdit(promptId) {
         const cats = db.tables.categories;
         const cat = cats.find(c => c.category_name === p.category);
         state.editingPrompt = {
-          prompt_id: p.id.toString(),
+          prompt_id: String(p.id),
           title: p.title,
           category_id: cat ? cat.category_id : 1,
           current_prompt_text: p.prompt_text,
@@ -954,7 +976,10 @@ async function loadPromptForEdit(promptId) {
     state.editingPrompt = prompt;
     state.activePromptId = prompt.prompt_id;
     navigateTo('/prompts');
+    return;
   }
+
+  alert('Could not load prompt. Please try again.');
 }
 
 // ============================================================================
