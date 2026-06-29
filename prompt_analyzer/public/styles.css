@@ -363,6 +363,20 @@ code, pre {
     button {
         width: 100%;
     }
+
+    .prompt-actions {
+        flex-wrap: wrap;
+        justify-content: flex-start !important;
+    }
+
+    .prompt-actions button {
+        width: auto;
+        flex: 1 1 auto;
+        white-space: nowrap;
+        font-size: 0.8125rem;
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
 }
 
 /* Small Phones */
@@ -396,5 +410,22 @@ code, pre {
 
     .p-8 {
         padding: 0.75rem !important;
+    }
+}
+
+/* Template cards on very small phones */
+@media (max-width: 480px) {
+    #templates-container > div {
+        padding: 1rem !important;
+    }
+    #templates-container .truncate {
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
+        word-break: break-word;
+    }
+    #templates-container button {
+        width: auto;
+        white-space: nowrap;
     }
 }
