@@ -220,10 +220,6 @@ code, pre {
     transition: opacity 0.3s ease;
 }
 
-#sidebar.closed {
-    transform: translateX(-100%);
-}
-
 #app-shell.sidebar-collapsed #sidebar {
     width: 0 !important;
     min-width: 0;

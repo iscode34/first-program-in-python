@@ -686,6 +686,7 @@ function navigateTo(path) {
 }
 
 function closeMobileSidebar() {
+    if (window.innerWidth >= 1024) return;
     const sidebar = document.getElementById('sidebar');
     const backdrop = document.getElementById('sidebar-backdrop');
     if (sidebar) {
