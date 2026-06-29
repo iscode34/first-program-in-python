@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PromptPilot — AI-Prompt Analyzer</title>
+    <!-- SEO Best Practices -->
+    <meta name="description" content="PromptPilot is an industry-grade AI prompt analyzer platform designed for testing, versioning, and optimizing LLM prompts with real-time relational telemetry.">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%234F46E5%22/><circle cx=%2250%22 cy=%2245%22 r=%2220%22 fill=%22white%22/><circle cx=%2242%22 cy=%2245%22 r=%224%22 fill=%22%231D1B4F%22/><circle cx=%2258%22 cy=%2245%22 r=%224%22 fill=%22%231D1B4F%22/><rect x=%2238%22 y=%2260%22 width=%2224%22 height=%224%22 rx=%222%22 fill=%22white%22/></svg>">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'brand-navy': '#1D1B4F',
+              'brand-indigo': '#4F46E5',
+              'brand-highlight': '#6366F1',
+              'brand-surface': '#F9FAFB',
+              'brand-text': '#1A1A1A',
+              'state-success': '#10B981',
+              'state-warning': '#F59E0B',
+              'state-error': '#EF4444',
+            }
+          }
+        }
+      }
+    </script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body class="bg-brand-navy min-h-screen flex flex-col">
+
+    <!-- ==========================================================================
+        1. AUTHENTICATION CONTAINER (Sign In / Sign Up)
+        ========================================================================== -->
+    <div id="auth-screen" class="flex-grow flex items-center justify-center p-4">
+      <div class="w-full max-w-4xl bg-[#1b1945] rounded-2xl shadow-2xl overflow-hidden grid md:grid-cols-2 border border-[#3b378c]/30">
+        
+        <!-- Left Branding Panel (White Background) -->
+        <div class="bg-brand-surface p-12 flex flex-col justify-center items-center text-center">
+          <!-- Robot Icon -->
+          <div class="w-28 h-28 bg-brand-navy rounded-full flex items-center justify-center mb-6 shadow-lg border-4 border-brand-indigo/10">
+            <svg class="w-16 h-16 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="10" rx="2" />
+              <circle cx="12" cy="5" r="2" />
+              <path d="M12 7v4" />
+              <line x1="8" y1="16" x2="8" y2="16" stroke-width="3" />
+              <line x1="16" y1="16" x2="16" y2="16" stroke-width="3" />
+            </svg>
+          </div>
+          <h1 class="text-2xl font-bold text-brand-text mb-2 tracking-tight">AI Prompt Analyzer</h1>
+          <p class="text-slate-600 text-sm max-w-xs leading-relaxed">
+            Organize, analyze, and enhance your AI prompts in one intelligent workspace.
+          </p>
+        </div>
+
+        <!-- Right Form Panel (Dark Navy Background) -->
+        <div class="p-12 flex flex-col justify-center bg-gradient-to-br from-[#1b1945] to-brand-navy" id="auth-form-container">
+          <!-- Form injected dynamically via app.js -->
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ==========================================================================
+        2. APPLICATION SHELL
+        ========================================================================== -->
+    <div id="app-shell" class="hidden flex-grow flex flex-row min-h-screen">
+      
+      <!-- LEFT PERSISTENT NAVIGATION PANEL -->
+      <aside class="w-64 bg-brand-surface border-r border-slate-200 flex flex-col justify-between shrink-0">
+        <div class="p-6">
+          <!-- Logo and Title -->
+          <div class="flex items-center gap-3 mb-8 cursor-pointer" onclick="switchTab('dashboard')">
+            <div class="w-10 h-10 bg-brand-navy rounded-xl flex items-center justify-center shadow-md">
+              <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="10" rx="2" />
+                <circle cx="12" cy="5" r="2" />
+                <path d="M12 7v4" />
+                <line x1="8" y1="15" x2="8" y2="15" stroke-width="3" />
+                <line x1="16" y1="15" x2="16" y2="15" stroke-width="3" />
+              </svg>
+            </div>
+            <div>
+              <span class="font-extrabold text-brand-text text-lg leading-tight block">Prompt</span>
+              <span class="font-semibold text-brand-indigo text-md leading-tight block -mt-1">Pilot</span>
+            </div>
+          </div>
+
+          <!-- Navigation Links -->
+          <nav class="space-y-1">
+            <button id="nav-dashboard" onclick="switchTab('dashboard')" class="sidebar-nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition duration-150 active">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z"/></svg>
+              Dashboard
+            </button>
+            
+            <button id="nav-diagnostics" onclick="switchTab('diagnostics')" class="sidebar-nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition duration-150">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+              Diagnostics
+            </button>
+            
+            <button id="nav-console" onclick="switchTab('console')" class="sidebar-nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition duration-150">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              SQL DB Console
+            </button>
+          </nav>
+        </div>
+
+        <!-- User Panel -->
+        <div class="p-6 border-t border-slate-200">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-brand-indigo font-bold text-sm shadow-inner">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+            </div>
+            <div class="truncate max-w-[120px]">
+              <span class="block text-brand-text text-sm font-bold truncate" id="greet-username">Guest</span>
+              <span class="block text-slate-400 text-xxs truncate">Tenant Active</span>
+            </div>
+          </div>
+          <button onclick="handleLogout()" class="w-full border border-red-500 text-red-500 hover:bg-red-50 font-semibold text-xs py-2 rounded-lg transition text-center block">
+            Logout
+          </button>
+        </div>
+      </aside>
+
+      <!-- RIGHT CONTENT AREA -->
+      <main class="flex-grow p-8 overflow-y-auto flex flex-col justify-start">
+        
+        <!-- ======================================================================
+            A. DASHBOARD TAB
+            ====================================================================== -->
+        <section id="view-dashboard" class="space-y-8 animate-fade-in">
+          <!-- Greetings -->
+          <div class="flex justify-between items-center">
+            <div>
+              <h1 class="text-3xl font-extrabold tracking-tight text-white mb-1">
+                Welcome back, Samuel 👋
+              </h1>
+              <p class="text-slate-400 text-sm">Let's improve some prompts today.</p>
+            </div>
+            <button onclick="clickClear(); switchTab('diagnostics');" class="bg-brand-indigo hover:bg-brand-highlight text-white text-sm font-bold px-4 py-2.5 rounded-lg flex items-center gap-2 shadow-lg transition">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              New Prompt
+            </button>
+          </div>
+
+          <!-- Metrics cards row -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Card 1 -->
+            <div class="bg-[#25235c] border border-[#3b378c] p-6 rounded-xl flex items-center gap-5 shadow-lg">
+              <div class="p-4 bg-indigo-500/10 rounded-lg text-indigo-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+              </div>
+              <div>
+                <span class="block text-slate-400 text-xs font-semibold uppercase tracking-wider">Total Prompts</span>
+                <span class="text-3xl font-extrabold text-white" id="stat-total-prompts">0</span>
+              </div>
+            </div>
+            <!-- Card 2 -->
+            <div class="bg-[#25235c] border border-[#3b378c] p-6 rounded-xl flex items-center gap-5 shadow-lg">
+              <div class="p-4 bg-amber-500/10 rounded-lg text-amber-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.907c.961 0 1.36 1.252.584 1.831l-3.97 2.883a1 1 0 00-.364 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.971-2.883a1 1 0 00-1.18 0l-3.97 2.883c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.364-1.118L2.98 10.122c-.776-.579-.377-1.831.582-1.831h4.907a1 1 0 00.95-.69L11.05 2.928z"/></svg>
+              </div>
+              <div>
+                <span class="block text-slate-400 text-xs font-semibold uppercase tracking-wider">Favorites</span>
+                <span class="text-3xl font-extrabold text-white" id="stat-favorites">0</span>
+              </div>
+            </div>
+            <!-- Card 3 -->
+            <div class="bg-[#25235c] border border-[#3b378c] p-6 rounded-xl flex items-center gap-5 shadow-lg">
+              <div class="p-4 bg-purple-500/10 rounded-lg text-purple-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+              </div>
+              <div>
+                <span class="block text-slate-400 text-xs font-semibold uppercase tracking-wider">AI Improvements</span>
+                <span class="text-3xl font-extrabold text-white" id="stat-improvements">0</span>
+              </div>
+            </div>
+            <!-- Card 4 -->
+            <div class="bg-[#25235c] border border-[#3b378c] p-6 rounded-xl flex items-center gap-5 shadow-lg">
+              <div class="p-4 bg-cyan-500/10 rounded-lg text-cyan-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+              </div>
+              <div>
+                <span class="block text-slate-400 text-xs font-semibold uppercase tracking-wider">Avg Quality Score</span>
+                <span class="text-3xl font-extrabold text-white" id="stat-avg-score">0%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dashboard Split grid -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Recent prompts library (left side 2/3) -->
+            <div class="lg:col-span-2 bg-[#25235c] border border-[#3b378c] rounded-xl p-6 shadow-xl flex flex-col">
+              <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-bold text-white uppercase tracking-wider">Recent Prompts</h3>
+                <button onclick="switchTab('diagnostics')" class="text-xs text-indigo-400 hover:text-white transition font-semibold">View All Workspace →</button>
+              </div>
+
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                  <thead>
+                    <tr class="border-b border-[#3b378c]/60 text-slate-400 text-xs font-bold uppercase">
+                      <th class="py-3 px-4">Prompt</th>
+                      <th class="py-3 px-4">Category</th>
+                      <th class="py-3 px-4">Score</th>
+                      <th class="py-3 px-4">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="recent-prompts-tbody">
+                    <!-- Injected via app.js -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- AI insights panel (right side 1/3) -->
+            <div class="space-y-6">
+              <div class="bg-gradient-to-br from-[#8B5CF6]/20 to-[#06B6D4]/20 border border-[#8B5CF6]/40 p-6 rounded-xl shadow-xl flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center gap-2 mb-4 text-[#06B6D4]">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                    <h4 class="text-md font-bold uppercase tracking-wider">AI Insights</h4>
+                  </div>
+                  <p class="text-slate-300 text-sm leading-relaxed mb-4">
+                    Your average prompt quality score has improved <span class="text-green-400 font-bold">12%</span> this week.
+                  </p>
+                  <div class="bg-brand-navy/60 p-4 rounded-lg border border-[#3b378c]/30 text-xs text-slate-300 space-y-2">
+                    <div><strong>Most used category:</strong> Coding</div>
+                    <div><strong>Action recommendation:</strong> 5 prompts need variable improvements.</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- DB stats card -->
+              <div class="bg-[#25235c] border border-[#3b378c] p-6 rounded-xl shadow-xl">
+                <h4 class="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
+                  Relational Telemetry Schema
+                </h4>
+                <div class="space-y-2 text-xs text-slate-400">
+                  <p>PromptPilot enforces <strong>Third Normal Form (3NF)</strong> with automated ledger auditing and schema-level cascades.</p>
+                  <div class="flex justify-between items-center bg-brand-navy/30 px-3 py-1.5 rounded">
+                    <span>Users Table Isolation</span>
+                    <span class="text-green-400 font-semibold font-mono">ENFORCED</span>
+                  </div>
+                  <div class="flex justify-between items-center bg-brand-navy/30 px-3 py-1.5 rounded">
+                    <span>Revision History Ledger</span>
+                    <span class="text-green-400 font-semibold font-mono">APPEND-ONLY</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ======================================================================
+            B. AI DIAGNOSTICS WORKSPACE TAB
+            ====================================================================== -->
+        <section id="view-diagnostics" class="hidden space-y-8 animate-fade-in">
+          <div>
+            <h1 class="text-3xl font-extrabold tracking-tight text-white mb-1" id="diagnostics-workspace-title">
+              AI Diagnostics Workspace
+            </h1>
+            <p class="text-slate-400 text-sm">Analyze your prompt quality and receive AI-powered recommendations.</p>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Central Workspace Column (Left 2/3) -->
+            <div class="lg:col-span-2 space-y-6">
+              
+              <!-- Prompt Input Area -->
+              <div class="bg-[#25235c] border border-[#3b378c] rounded-xl p-6 shadow-xl space-y-4">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    Prompt Input Workspace
+                  </span>
+                  <span id="char-counter" class="text-xs text-slate-400">0 / 4000 characters</span>
+                </div>
+
+                <!-- Metadata Row -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-slate-400 text-xs font-semibold mb-1">PROMPT TITLE</label>
+                    <input type="text" id="diag-title" class="w-full bg-[#131138] border border-[#3b378c] text-white text-sm px-4 py-2 rounded focus:outline-none focus:border-indigo-500" placeholder="e.g. Marketing Lead Email">
+                  </div>
+                  <div>
+                    <label class="block text-slate-400 text-xs font-semibold mb-1">CATEGORY TAXONOMY</label>
+                    <select id="diag-category" class="w-full bg-[#131138] border border-[#3b378c] text-white text-sm px-4 py-2 rounded focus:outline-none focus:border-indigo-500">
+                      <!-- Loaded dynamically -->
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Prompt body -->
+                <div>
+                  <label class="block text-slate-400 text-xs font-semibold mb-1">PROMPT TEXT BODY</label>
+                  <textarea id="diag-text" oninput="updateCharCount()" class="w-full h-64 bg-[#131138] border border-[#3b378c] text-white text-sm p-4 rounded focus:outline-none focus:border-indigo-500 font-mono" placeholder="Write a persuasive email to get an investor for my new project. Make it..."></textarea>
+                </div>
+
+                <!-- Buttons -->
+                <div class="flex justify-end gap-3">
+                  <button onclick="clickClear()" class="border border-[#3b378c] hover:bg-[#131138] text-slate-300 text-sm font-semibold px-4 py-2 rounded transition">Clear</button>
+                  <button onclick="clickAnalyze()" class="bg-indigo-900 border border-indigo-500/50 hover:bg-indigo-800 text-white text-sm font-semibold px-4 py-2 rounded transition">Analyze Prompt</button>
+                  <button onclick="handleSavePrompt()" class="bg-[#10B981] hover:bg-emerald-600 text-white text-sm font-bold px-6 py-2 rounded shadow transition">Save Prompt</button>
+                </div>
+              </div>
+
+              <!-- Analysis Overview (Gauges) -->
+              <div class="bg-[#25235c] border border-[#3b378c] rounded-xl p-6 shadow-xl">
+                <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-6">Analysis Overview</h3>
+                
+                <div class="grid grid-cols-3 gap-4 text-center">
+                  <!-- Gauge 1 -->
+                  <div class="flex flex-col items-center">
+                    <div class="relative w-24 h-24 mb-2">
+                      <svg class="gauge-svg w-24 h-24" viewBox="0 0 36 36">
+                        <path class="gauge-circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                        <path id="gauge-clarity-value" class="gauge-circle-val" stroke="#10B981" stroke-dasharray="100, 100" stroke-dashoffset="100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                      </svg>
+                      <div id="gauge-clarity-text" class="absolute inset-0 flex items-center justify-center font-extrabold text-white text-sm">0%</div>
+                    </div>
+                    <span class="text-slate-400 text-xxs font-bold uppercase">Clarity Excellence</span>
+                  </div>
+
+                  <!-- Gauge 2 -->
+                  <div class="flex flex-col items-center">
+                    <div class="relative w-24 h-24 mb-2">
+                      <svg class="gauge-svg w-24 h-24" viewBox="0 0 36 36">
+                        <path class="gauge-circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                        <path id="gauge-grammar-value" class="gauge-circle-val" stroke="#F59E0B" stroke-dasharray="100, 100" stroke-dashoffset="100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                      </svg>
+                      <div id="gauge-grammar-text" class="absolute inset-0 flex items-center justify-center font-extrabold text-white text-sm">0%</div>
+                    </div>
+                    <span class="text-slate-400 text-xxs font-bold uppercase">Grammar Excellence</span>
+                  </div>
+
+                  <!-- Gauge 3 -->
+                  <div class="flex flex-col items-center">
+                    <div class="relative w-24 h-24 mb-2">
+                      <svg class="gauge-svg w-24 h-24" viewBox="0 0 36 36">
+                        <path class="gauge-circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                        <path id="gauge-optimization-value" class="gauge-circle-val" stroke="#EF4444" stroke-dasharray="100, 100" stroke-dashoffset="100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                      </svg>
+                      <div id="gauge-optimization-text" class="absolute inset-0 flex items-center justify-center font-extrabold text-white text-sm">0%</div>
+                    </div>
+                    <span class="text-slate-400 text-xxs font-bold uppercase">Optimization Excellence</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Contextual Diagnostics Reports Sidebar (Right 1/3) -->
+            <div class="space-y-6">
+              
+              <!-- Diagnostic Report Card -->
+              <div class="bg-[#25235c] border border-[#3b378c] rounded-xl p-6 shadow-xl space-y-4">
+                <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2 border-b border-[#3b378c]/40 pb-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                  Diagnostic Report
+                </h3>
+                
+                <div class="space-y-3 text-xs">
+                  <div id="report-clarity" class="bg-brand-navy/40 p-3 rounded border-l-4 border-indigo-500 text-slate-300">
+                    Submit prompt text for evaluation...
+                  </div>
+                  <div id="report-grammar" class="bg-brand-navy/40 p-3 rounded border-l-4 border-amber-500 text-slate-300">
+                    Submit prompt text for evaluation...
+                  </div>
+                  <div id="report-optimization" class="bg-brand-navy/40 p-3 rounded border-l-4 border-red-500 text-slate-300">
+                    Submit prompt text for evaluation...
+                  </div>
+                </div>
+                
+                <button onclick="clickEnhance()" class="w-full bg-[#6366F1] hover:bg-indigo-500 text-white font-bold text-xs py-2.5 rounded transition shadow-md">
+                  Enhance Prompt
+                </button>
+              </div>
+
+              <!-- Overall Prompt Score -->
+              <div class="bg-[#25235c] border border-[#3b378c] rounded-xl p-6 shadow-xl space-y-5">
+                <div class="flex justify-between items-center">
+                  <h4 class="text-sm font-bold text-white uppercase tracking-wider">Overall Prompt Score</h4>
+                  <span id="overall-score-fraction" class="text-xs text-indigo-300 font-bold font-mono">0/100</span>
+                </div>
+                
+                <!-- Progress bar -->
+                <div>
+                  <div class="w-full bg-brand-navy rounded-full h-2">
+                    <div id="overall-progress-bar" class="h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                  </div>
+                  <div class="text-right text-xxs font-mono text-slate-400 mt-1 font-bold" id="overall-score-pct">0%</div>
+                </div>
+
+                <!-- Checklist -->
+                <ul class="text-xxs text-slate-300 font-semibold space-y-2 border-t border-[#3b378c]/40 pt-4">
+                  <li id="check-ready" class="flex items-center gap-1.5 text-slate-400">✗ Insufficient Telemetry Metrics</li>
+                  <li id="check-quality" class="flex items-center gap-1.5 text-slate-400">✗ Needs Performance Tuning</li>
+                  <li id="check-improvements" class="flex items-center gap-1.5 text-slate-400">✓ Optimization Complete</li>
+                </ul>
+
+                <!-- Export Button -->
+                <button onclick="clickExport()" class="w-full border border-[#3b378c] hover:bg-[#131138] text-indigo-300 hover:text-white font-semibold text-xs py-2 rounded-lg transition text-center flex items-center justify-center gap-1.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                  Export Prompt
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ======================================================================
+            C. SQL DB CONSOLE TAB
+            ====================================================================== -->
+        <section id="view-sqlconsole" class="hidden space-y-8 animate-fade-in">
+          <div>
+            <h1 class="text-3xl font-extrabold tracking-tight text-white mb-1">
+              SQL DB Inspector Console
+            </h1>
+            <p class="text-slate-400 text-sm">Inspect simulated relational database tables and compile SELECT queries in real time.</p>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Editor & Results (Left 2/3) -->
+            <div class="lg:col-span-2 space-y-6">
+              <div class="bg-[#25235c] border border-[#3b378c] rounded-xl p-6 shadow-xl space-y-4">
+                
+                <!-- Title & templates -->
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
+                  <span class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+                    Interactive SQL Compiler
+                  </span>
+                  
+                  <div class="flex items-center gap-2">
+                    <span class="text-xxs text-slate-400 font-semibold uppercase">Templates:</span>
+                    <select id="sql-template-select" onchange="loadSqlTemplate()" class="bg-[#131138] border border-[#3b378c] text-sky-300 text-xxs px-2.5 py-1 rounded focus:outline-none">
+                      <option value="">-- Choose template --</option>
+                      <option value="all_prompts">SELECT * FROM prompts</option>
+                      <option value="all_users">SELECT * FROM users</option>
+                      <option value="history_desc">SELECT * FROM prompt_history</option>
+                      <option value="analytics_high">SELECT * FROM ai_analysis (High Clarity)</option>
+                      <option value="joined_data">SELECT prompts JOIN categories</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Input Area -->
+                <div class="relative">
+                  <textarea id="sql-input" class="sql-input-area w-full h-36 p-4 rounded text-sm focus:outline-none" placeholder="SELECT * FROM prompts WHERE is_favorite = true;"></textarea>
+                  <button onclick="executeConsoleSQL()" class="absolute bottom-4 right-4 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs px-5 py-2 rounded shadow-lg transition">
+                    Run Query
+                  </button>
+                </div>
+
+                <!-- Query Speed Benchmark -->
+                <div class="text-[#38bdf8] text-xxs font-mono" id="sql-query-duration"></div>
+
+                <!-- Error logging -->
+                <div id="console-sql-error" class="hidden bg-red-950/40 border border-red-500 text-red-200 text-xs px-4 py-2.5 rounded font-mono"></div>
+              </div>
+
+              <!-- Results Card -->
+              <div class="bg-[#25235c] border border-[#3b378c] rounded-xl p-6 shadow-xl">
+                <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-4">Query Results Grid</h3>
+                
+                <div class="overflow-x-auto w-full" id="sql-results-container">
+                  <div class="text-slate-400 text-xs italic py-4">Enter a SELECT query above and hit Run Query to see results.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- DB Table Schema Inspector Sidebar (Right 1/3) -->
+            <div class="space-y-6">
+              <div class="bg-[#25235c] border border-[#3b378c] rounded-xl p-6 shadow-xl">
+                <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-2 border-b border-[#3b378c]/40 pb-2 flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
+                  DB Table Inspector
+                </h3>
+                <p class="text-slate-400 text-xxs mb-4 leading-normal">Interactive schema tables synced directly to the local storage database state.</p>
+                
+                <!-- Inspector list -->
+                <div id="live-schema-inspector" class="space-y-2">
+                  <!-- Dynamically populated via app.js -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ======================================================================
+            D. PROMPT VERSION CONTROL TIMELINE VIEW
+            ====================================================================== -->
+        <section id="view-timeline" class="hidden space-y-8 animate-fade-in flex-grow flex flex-col justify-start">
+          
+          <!-- Header -->
+          <div class="flex justify-between items-center">
+            <div>
+              <div class="flex items-center gap-2 text-indigo-400 mb-1">
+                <button onclick="switchTab('dashboard')" class="hover:text-white transition flex items-center gap-1 text-sm font-bold">
+                  ← Back to Dashboard
+                </button>
+              </div>
+              <h1 class="text-3xl font-extrabold tracking-tight text-white" id="timeline-prompt-title">
+                Prompt Name
+              </h1>
+              <p class="text-slate-400 text-sm">Chronological revision history from prompt_history database ledger.</p>
+            </div>
+          </div>
+
+          <!-- Timeline Node Area -->
+          <div class="relative flex-grow min-h-[500px] border border-[#3b378c]/30 rounded-2xl bg-[#1b1945]/40 p-8 overflow-hidden shadow-2xl">
+            <!-- Central vertical line -->
+            <div class="timeline-line"></div>
+
+            <!-- History items -->
+            <div id="timeline-history-list" class="w-full relative py-6">
+              <!-- Injected via app.js -->
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+
+
+    <!-- ==========================================================================
+        3. MODAL POPUPS (Read More History Item)
+        ========================================================================== -->
+    <div id="readmore-modal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm items-center justify-center p-4">
+      <div class="w-full max-w-2xl bg-[#25235c] border-2 border-[#3b378c] rounded-xl shadow-2xl overflow-hidden animate-fade-in flex flex-col max-h-[85vh]">
+        
+        <!-- Modal Header -->
+        <div class="p-6 border-b border-[#3b378c] flex justify-between items-center bg-[#1b1945]">
+          <div>
+            <h3 id="modal-prompt-name" class="font-extrabold text-white text-lg tracking-tight">Prompt Title</h3>
+            <span id="modal-version-details" class="text-xxs text-indigo-400 font-bold font-mono block">Version Details</span>
+          </div>
+          <button onclick="closeReadMoreModal()" class="text-slate-400 hover:text-white transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="p-6 overflow-y-auto flex-grow bg-[#25235c]">
+          <label class="block text-slate-400 text-xs font-semibold mb-2 uppercase tracking-wider">Historical Text State</label>
+          <div id="modal-full-text" class="bg-brand-navy p-5 border border-[#3b378c] rounded text-slate-300 text-sm font-mono whitespace-pre-wrap leading-relaxed select-all">
+            Prompt content text snapshots will print here.
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="p-4 border-t border-[#3b378c] bg-[#1b1945] flex justify-between items-center">
+          <span class="text-xxs text-slate-400 italic">This modal displays the full snapshot retrieved from prompt_history.</span>
+          <button onclick="closeReadMoreModal()" class="bg-brand-indigo hover:bg-brand-highlight text-white text-xs font-bold px-6 py-2 rounded transition">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Javascript Logic -->
+    <script src="app.js"></script>
+  </body>
+</html>

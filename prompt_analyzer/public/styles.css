@@ -1,0 +1,354 @@
+/* CSS Design System for PromptPilot */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
+
+:root {
+  /* Colors from report */
+  --primary-accent: #4F46E5;
+  --secondary-highlight: #6366F1;
+  --canvas-background: #1D1B4F;
+  --surface-card: #F9FAFB;
+  --primary-text: #1A1A1A;
+  
+  --ai-gradient-start: #8B5CF6;
+  --ai-gradient-end: #06B6D4;
+  
+  --success-state: #10B981;
+  --warning-state: #F59E0B;
+  --error-state: #EF4444;
+
+  /* Dark mode surface variables for high-fidelity widgets */
+  --dark-surface: #25235c;
+  --dark-surface-hover: #2e2b75;
+  --dark-border: #3b378c;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--canvas-background);
+  color: #ffffff;
+  overflow-x: hidden;
+}
+
+code, pre {
+  font-family: 'Fira Code', monospace;
+}
+
+/* Custom Scrollbar for Terminal / Code Editors */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--canvas-background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--dark-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--secondary-highlight);
+}
+
+/* Custom Radial Gauge (Doughnut charts) Animations */
+.gauge-svg {
+  transform: rotate(-90deg);
+}
+
+.gauge-circle-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 8;
+}
+
+.gauge-circle-val {
+  fill: none;
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1s ease-in-out, stroke 0.5s ease;
+}
+
+/* Custom Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Timeline Custom Styles */
+.timeline-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  background: linear-gradient(180deg, var(--primary-accent) 0%, var(--ai-gradient-end) 100%);
+  transform: translateX(-50%);
+}
+
+.timeline-dot {
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, -4px);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  border: 3px solid var(--primary-accent);
+  box-shadow: 0 0 10px var(--secondary-highlight);
+  transition: all 0.2s ease;
+}
+
+.timeline-card {
+  position: relative;
+  width: 45%;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.timeline-card:hover {
+  transform: translateY(-4px);
+}
+
+.timeline-left {
+  float: left;
+  text-align: right;
+  padding-right: 30px;
+}
+
+.timeline-right {
+  float: right;
+  text-align: left;
+  padding-left: 30px;
+}
+
+/* SQL Console Custom styling */
+.sql-input-area {
+  background-color: #131138;
+  border: 1px solid var(--dark-border);
+  color: #38bdf8;
+  font-family: 'Fira Code', monospace;
+  resize: vertical;
+}
+
+.sql-input-area:focus {
+  outline: none;
+  border-color: var(--secondary-highlight);
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.25);
+}
+
+.sql-results-table th {
+  background-color: #2e2b75;
+  color: #cbd5e1;
+}
+
+.sql-results-table td {
+  border-color: var(--dark-border);
+}
+
+.sql-results-table tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+/* Glassmorphism details */
+.glass-panel {
+  background: rgba(37, 35, 92, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+
+
+/* Sidebar Navigation */
+.sidebar-nav-btn {
+    background: transparent;
+    color: #64748b;
+    transition: all 0.2s ease;
+}
+
+.sidebar-nav-btn:hover {
+    background: rgba(79, 70, 229, 0.08);
+    color: #4F46E5;
+}
+
+.sidebar-nav-btn.active {
+    background: #4F46E5;
+    color: white !important;
+}
+
+.sidebar-nav-btn.active svg {
+    color: white !important;
+}
+
+
+
+
+
+
+
+
+/* ============================= */
+/* Responsive Design */
+/* ============================= */
+
+/* Large Tablets */
+@media (max-width: 1024px) {
+
+    aside {
+        width: 220px !important;
+    }
+
+    main {
+        padding: 1.5rem !important;
+    }
+
+    .timeline-card {
+        width: 90% !important;
+    }
+}
+
+/* Tablets */
+@media (max-width: 768px) {
+
+    #app-shell {
+        flex-direction: column !important;
+    }
+
+    aside {
+        width: 100% !important;
+        height: auto !important;
+        position: relative !important;
+    }
+
+    main {
+        padding: 1rem !important;
+    }
+
+    .timeline-line {
+        left: 20px !important;
+    }
+
+    .timeline-card,
+    .timeline-left,
+    .timeline-right {
+        width: 100% !important;
+        float: none !important;
+        text-align: left !important;
+        padding-left: 50px !important;
+        padding-right: 0 !important;
+    }
+
+    .timeline-dot {
+        left: 20px !important;
+    }
+
+    table {
+        min-width: 700px;
+    }
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+
+    h1 {
+        font-size: 1.6rem !important;
+    }
+
+    .p-12 {
+        padding: 1.5rem !important;
+    }
+
+    .p-8 {
+        padding: 1rem !important;
+    }
+
+    .p-6 {
+        padding: 1rem !important;
+    }
+
+    .gap-8 {
+        gap: 1rem !important;
+    }
+
+    .gap-6 {
+        gap: 0.75rem !important;
+    }
+
+    .w-64 {
+        width: 100% !important;
+    }
+
+    .max-w-4xl {
+        max-width: 100% !important;
+    }
+
+    .grid-cols-3 {
+        grid-template-columns: 1fr !important;
+    }
+
+    .flex.justify-between {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 1rem;
+    }
+
+    .overflow-x-auto {
+        overflow-x: auto !important;
+    }
+
+    textarea {
+        height: 200px !important;
+    }
+
+    button {
+        width: 100%;
+    }
+}
+
+/* Small Phones */
+@media (max-width: 480px) {
+
+    body {
+        font-size: 14px;
+    }
+
+    h1 {
+        font-size: 1.3rem !important;
+    }
+
+    .text-3xl {
+        font-size: 1.5rem !important;
+    }
+
+    .w-24,
+    .h-24 {
+        width: 80px !important;
+        height: 80px !important;
+    }
+
+    .p-4 {
+        padding: 0.75rem !important;
+    }
+
+    .p-6 {
+        padding: 0.75rem !important;
+    }
+
+    .p-8 {
+        padding: 0.75rem !important;
+    }
+}
