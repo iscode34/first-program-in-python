@@ -16,18 +16,34 @@ app.use(express.urlencoded({ extended: true }));
 
 const generalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 200,
+    max: 50,
     standardHeaders: true,
     legacyHeaders: false,
     message: { message: 'Too many requests, please try again later.' }
 });
 
-const aiLimiter = rateLimit({
-    windowMs: 5 * 60 * 1000,
-    max: 20,
+const generalDailyLimiter = rateLimit({
+    windowMs: 24 * 60 * 60 * 1000,
+    max: 120,
     standardHeaders: true,
     legacyHeaders: false,
-    message: { message: 'AI request limit reached. Please wait 5 minutes before trying again.' }
+    message: { message: 'Daily request limit reached.' }
+});
+
+const aiLimiter = rateLimit({
+    windowMs: 20 * 60 * 1000,
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: 'AI request limit reached. Please wait 20 minutes.' }
+});
+
+const aiDailyLimiter = rateLimit({
+    windowMs: 24 * 60 * 60 * 1000,
+    max: 30,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: 'Daily AI request limit reached.' }
 });
 
 const authLimiter = rateLimit({
@@ -39,9 +55,12 @@ const authLimiter = rateLimit({
 });
 
 app.use('/api/', generalLimiter);
+app.use('/api/', generalDailyLimiter);
 app.use('/api/auth', authLimiter);
 app.use('/api/prompts/analyze', aiLimiter);
+app.use('/api/prompts/analyze', aiDailyLimiter);
 app.use('/api/prompts/enhance', aiLimiter);
+app.use('/api/prompts/enhance', aiDailyLimiter);
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'marketing.html'));
