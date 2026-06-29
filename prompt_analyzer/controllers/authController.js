@@ -6,6 +6,14 @@ exports.register = async (req, res) => {
     try {
         const { full_name, email, password } = req.body;
 
+        const userCount = await db.query('SELECT COUNT(*)::int AS count FROM users');
+
+        if (userCount.rows[0].count >= 30) {
+            return res.status(403).json({
+                message: 'Registration is currently full. The free tier has reached its capacity. Drop your email at promptpilot@uni.dev and we will add you to the waitlist — we will notify you when a spot opens up.'
+            });
+        }
+
         const userExists = await db.query(
             'SELECT * FROM users WHERE email = $1',
             [email]
