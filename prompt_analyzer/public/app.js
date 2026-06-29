@@ -691,6 +691,10 @@ function handleRoute() {
         showAuthScreen();
         return;
     }
+    if (!state.currentUser && path === '/login') {
+        showAuthScreen();
+        return;
+    }
     if (state.currentUser && path === '/login') {
         navigateTo('/dashboard');
         return;
@@ -1295,7 +1299,7 @@ function loadPromptForEdit(promptId) {
   }
 }
 
-function clickEnhance() {
+async function clickEnhance() {
   const textInput = document.getElementById('diag-text');
   let val = textInput.value.trim();
   
@@ -1304,7 +1308,35 @@ function clickEnhance() {
     return;
   }
 
-  // AI Enhancement mockup: expands the prompt text with standard guidelines
+  const token = localStorage.getItem('token');
+  if (token) {
+    try {
+      const btn = document.querySelector('button[onclick="clickEnhance()"]');
+      if (btn) { btn.disabled = true; btn.innerText = 'Enhancing...'; }
+
+      const response = await fetch('/api/prompts/enhance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ prompt_text: val })
+      });
+      const data = await response.json();
+      if (btn) { btn.disabled = false; btn.innerText = 'Enhance'; }
+
+      if (data.success) {
+        textInput.value = data.enhanced_prompt;
+        updateCharCount();
+        clickAnalyze();
+        return;
+      } else {
+        alert(data.message || 'Enhancement failed');
+      }
+    } catch (err) {
+      const btn = document.querySelector('button[onclick="clickEnhance()"]');
+      if (btn) { btn.disabled = false; btn.innerText = 'Enhance'; }
+      console.error('DeepSeek enhance failed:', err);
+    }
+  }
+
   let enhanced = val;
   if (!/\b(act as|you are)\b/i.test(val)) {
     enhanced = "Act as an expert assistant. " + enhanced;

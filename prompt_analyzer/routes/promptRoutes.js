@@ -4,6 +4,7 @@ const promptController = require('../controllers/promptController');
 const { authenticate } = require('../middleware/auth');
 
 router.post('/analyze', authenticate, promptController.analyzePrompt);
+router.post('/enhance', authenticate, promptController.enhancePrompt);
 router.post('/', authenticate, promptController.savePrompt);
 router.get('/', authenticate, promptController.getPrompts);
 router.get('/:id', authenticate, promptController.getPromptById);

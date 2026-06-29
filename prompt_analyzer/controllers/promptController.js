@@ -301,6 +301,60 @@ exports.getPromptHistory = async (req, res) => {
     }
 };
 
+exports.enhancePrompt = async (req, res) => {
+    try {
+        const { prompt_text } = req.body;
+
+        if (!prompt_text || prompt_text.trim().length === 0) {
+            return res.status(400).json({ message: 'Prompt text is required' });
+        }
+
+        const response = await fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
+            },
+            body: JSON.stringify({
+                model: 'deepseek-chat',
+                messages: [
+                    {
+                        role: 'system',
+                        content: `You are an expert prompt engineer. Your job is to enhance and improve prompts to make them more effective with AI models. For the given prompt, apply these improvements:
+1. Add a clear role/persona (e.g. "Act as an expert...") if missing
+2. Specify the desired output format (bullet points, table, markdown, etc.) if missing
+3. Add contextual constraints and parameters in [brackets] to make it reusable
+4. Include quality constraints (e.g. "do not include fluff", "be specific")
+5. Fix grammar and improve clarity
+
+Return ONLY the enhanced prompt text. Do not include explanations, quotes, or any other text. Just the enhanced prompt.`
+                    },
+                    {
+                        role: 'user',
+                        content: `Enhance this prompt:\n\n${prompt_text}`
+                    }
+                ],
+                temperature: 0.7,
+                max_tokens: 2000
+            })
+        });
+
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(`DeepSeek API error ${response.status}: ${errText}`);
+        }
+
+        const data = await response.json();
+        const enhanced = data.choices[0].message.content.trim();
+
+        res.json({ success: true, enhanced_prompt: enhanced });
+
+    } catch (error) {
+        console.error('Enhance error:', error);
+        res.status(500).json({ message: 'Enhance failed', error: error.message });
+    }
+};
+
 exports.restoreVersion = async (req, res) => {
     try {
         const userId = req.user.id;
