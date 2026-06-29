@@ -470,27 +470,23 @@ function initSession() {
   const sessionUser = sessionStorage.getItem('promptpilot_user');
   if (sessionUser) {
     state.currentUser = JSON.parse(sessionUser);
-    showAppShell();
+    handleRoute();
   } else {
-    showAuthScreen();
+    handleRoute();
   }
 }
 
-// View switches
 function showAuthScreen() {
   document.getElementById('auth-screen').classList.remove('hidden');
   document.getElementById('app-shell').classList.add('hidden');
-  renderAuthView('signin');
+  const showSignup = new URLSearchParams(window.location.search).get('signup') === '1';
+  renderAuthView(showSignup ? 'signup' : 'signin');
 }
 
 function showAppShell() {
   document.getElementById('auth-screen').classList.add('hidden');
   document.getElementById('app-shell').classList.remove('hidden');
-  
-  // Set user greetings
   document.getElementById('greet-username').innerText = state.currentUser.username;
-  
-  switchTab(state.activeTab);
 }
 
 function renderAuthView(view) {
@@ -622,7 +618,7 @@ async function handleSignIn(e) {
             JSON.stringify(state.currentUser)
         );
 
-        showAppShell();
+        navigateTo('/dashboard');
 
     } catch (err) {
         console.error(err);
@@ -683,60 +679,51 @@ async function handleSignUp(e) {
     }
 }
 
-function switchTab(tab) {
-console.log("TAB:", tab);
-    state.activeTab = tab;
-
-    // إخفاء جميع الصفحات
-    document.getElementById('view-dashboard')?.classList.add('hidden');
-    document.getElementById('view-diagnostics')?.classList.add('hidden');
-    document.getElementById('view-sqlconsole')?.classList.add('hidden');
-    document.getElementById('view-timeline')?.classList.add('hidden');
-
-    // إزالة اللون النشط من القائمة
-document.querySelectorAll('.sidebar-nav-btn, .sidebar-item').forEach(item => {
-    item.classList.remove('bg-indigo-600');
-    item.classList.remove('text-white');
-    item.classList.remove('active');
-});
-// تفعيل العنصر الحالي
-let activeBtn = null;
-
-if(tab === 'dashboard')
-    activeBtn = document.getElementById('nav-dashboard');
-
-if(tab === 'diagnostics')
-    activeBtn = document.getElementById('nav-diagnostics');
-
-if(tab === 'console')
-    activeBtn = document.getElementById('nav-console');
-
-if (activeBtn) {
-    activeBtn.classList.add('active');
+function navigateTo(path) {
+    window.history.pushState({}, '', path);
+    handleRoute();
 }
 
-    // عرض الصفحة المطلوبة
-    switch(tab){
-
-        case 'dashboard':
-            document.getElementById('view-dashboard')?.classList.remove('hidden');
-            renderDashboard();
-            break;
-
-        case 'diagnostics':
-            document.getElementById('view-diagnostics')?.classList.remove('hidden');
-            renderDiagnostics();
-            break;
-
-        case 'console':
-            document.getElementById('view-sqlconsole')?.classList.remove('hidden');
-            renderSQLConsole();
-            break;
-
-        case 'timeline':
-            document.getElementById('view-timeline')?.classList.remove('hidden');
-            break;
+function handleRoute() {
+    const path = window.location.pathname;
+    if (!state.currentUser && path !== '/login') {
+        window.history.replaceState({}, '', '/login');
+        showAuthScreen();
+        return;
     }
+    if (state.currentUser && path === '/login') {
+        navigateTo('/dashboard');
+        return;
+    }
+    showAppShell();
+    hideAllViews();
+    setActiveNav(path);
+
+    switch(path) {
+        case '/dashboard': document.getElementById('view-dashboard')?.classList.remove('hidden'); renderDashboard(); break;
+        case '/prompts': document.getElementById('view-diagnostics')?.classList.remove('hidden'); renderDiagnostics(); break;
+        case '/templates': document.getElementById('view-templates')?.classList.remove('hidden'); renderTemplates(); break;
+        case '/settings': document.getElementById('view-settings')?.classList.remove('hidden'); renderSettings(); break;
+        default: document.getElementById('view-dashboard')?.classList.remove('hidden'); renderDashboard();
+    }
+}
+
+function hideAllViews() {
+    ['view-dashboard','view-diagnostics','view-templates','view-settings','view-timeline'].forEach(id => {
+        document.getElementById(id)?.classList.add('hidden');
+    });
+}
+
+function setActiveNav(path) {
+    document.querySelectorAll('.sidebar-nav-btn').forEach(b => b.classList.remove('active'));
+    const map = { '/dashboard': 'nav-dashboard', '/prompts': 'nav-prompts', '/templates': 'nav-templates', '/settings': 'nav-settings' };
+    const btnId = map[path];
+    if (btnId) document.getElementById(btnId)?.classList.add('active');
+}
+
+function switchTab(tab) {
+    const map = { dashboard: '/dashboard', diagnostics: '/prompts', prompts: '/prompts', templates: '/templates', settings: '/settings' };
+    navigateTo(map[tab] || '/dashboard');
 }
 // ============================================================================
 // 5. RENDERING: DASHBOARD
@@ -861,10 +848,6 @@ function toggleFavoriteState(promptId) {
   }
 
   renderDashboard();
-
-  if (state.activeTab === 'console') {
-    renderSQLConsole();
-  }
 }
 
 function deletePromptItem(promptId) {
@@ -885,10 +868,6 @@ function deletePromptItem(promptId) {
     }
 
     renderDashboard();
-
-    if (state.activeTab === 'console') {
-      renderSQLConsole();
-    }
   }
 }
 
@@ -1401,186 +1380,167 @@ function restorePromptVersion(historyId) {
 }
 
 // ============================================================================
-// 8. RENDERING: SQL CONSOLE & DB INSPECTOR
+// TEMPLATES VIEW
 // ============================================================================
+async function renderTemplates() {
+    const container = document.getElementById('templates-container');
+    container.innerHTML = '<div class="col-span-full text-center py-12 text-slate-400">Loading templates...</div>';
 
-const SQL_TEMPLATES = {
-  all_prompts: `SELECT * FROM prompts;`,
-  all_users: `SELECT * FROM users;`,
-  history_desc: `SELECT * FROM prompt_history ORDER BY version_number DESC;`,
-  analytics_high: `SELECT * FROM ai_analysis WHERE clarity_score > 75;`,
-  joined_data: `SELECT title, category_name, current_prompt_text FROM prompts JOIN categories ON prompts.category_id = categories.category_id;`
-};
+    const token = localStorage.getItem('token');
+    if (!token) return;
 
-function renderSQLConsole() {
-  // Show table schemas/rows in the live inspector card
-  renderLiveSchemaInspector();
-}
-
-function loadSqlTemplate() {
-  const sel = document.getElementById('sql-template-select');
-  const sqlInput = document.getElementById('sql-input');
-  if (sel.value && SQL_TEMPLATES[sel.value]) {
-    sqlInput.value = SQL_TEMPLATES[sel.value];
-  }
-}
-
-function executeConsoleSQL() {
-  const sqlInput = document.getElementById('sql-input').value;
-  const consoleError = document.getElementById('console-sql-error');
-  const resultsContainer = document.getElementById('sql-results-container');
-  const durationLabel = document.getElementById('sql-query-duration');
-
-  consoleError.classList.add('hidden');
-  resultsContainer.innerHTML = '';
-  durationLabel.innerText = '';
-
-  const start = performance.now();
-  try {
-    const { columns, rows } = evaluateSQL(sqlInput);
-    const end = performance.now();
-    const duration = (end - start).toFixed(2);
-    
-    // NFR1: Performance benchmark (target reads under 150ms)
-    durationLabel.innerText = `Query executed in ${duration}ms (Performance benchmark target: ≤ 150ms)`;
-
-    if (rows.length === 0) {
-      resultsContainer.innerHTML = `
-        <div class="text-slate-400 text-sm py-4 italic">Query executed successfully, but returned 0 rows.</div>
-      `;
-      return;
-    }
-
-    // Build Table Output
-    const table = document.createElement('table');
-    table.className = 'w-full sql-results-table border-collapse text-left text-sm mt-2 rounded overflow-hidden shadow-lg';
-    
-    // Header
-    const thead = document.createElement('thead');
-    const headerTr = document.createElement('tr');
-    columns.forEach(col => {
-      const th = document.createElement('th');
-      th.className = 'py-2 px-3 font-semibold text-[#cbd5e1] uppercase text-xs tracking-wider border-b border-[#3b378c]';
-      th.innerText = col;
-      headerTr.appendChild(th);
-    });
-    thead.appendChild(headerTr);
-    table.appendChild(thead);
-
-    // Body
-    const tbody = document.createElement('tbody');
-    rows.forEach(row => {
-      const tr = document.createElement('tr');
-      tr.className = 'border-b border-[#3b378c]/30 hover:bg-[#25235c]/50 transition';
-      columns.forEach(col => {
-        const td = document.createElement('td');
-        td.className = 'py-2 px-3 text-slate-300 font-mono text-xs max-w-[300px] truncate';
-        let val = row[col];
-        if (val && typeof val === 'object') {
-          val = JSON.stringify(val);
-        }
-        td.innerText = val !== null ? val : 'NULL';
-        td.title = val !== null ? String(val) : 'NULL';
-        tr.appendChild(td);
-      });
-      tbody.appendChild(tr);
-    });
-    table.appendChild(tbody);
-
-    resultsContainer.appendChild(table);
-
-  } catch (err) {
-    consoleError.innerText = err.message;
-    consoleError.classList.remove('hidden');
-  }
-}
-
-function renderLiveSchemaInspector() {
-  const inspector = document.getElementById('live-schema-inspector');
-  inspector.innerHTML = '';
-
-  const tables = ['users', 'categories', 'prompts', 'prompt_history', 'ai_analysis', 'favorites'];
-
-  tables.forEach(tableName => {
-    const list = db.tables[tableName];
-    const card = document.createElement('div');
-    card.className = 'bg-[#1b1945] border border-[#3b378c] rounded-lg p-4 mb-4';
-    
-    // Header
-    card.innerHTML = `
-      <div class="flex justify-between items-center mb-2 border-b border-[#3b378c]/40 pb-2">
-        <h4 class="font-mono text-sm text-indigo-400 font-bold">TABLE ${tableName}</h4>
-        <span class="text-xxs px-2 py-0.5 rounded-full bg-indigo-900/50 text-indigo-200">${list.length} rows</span>
-      </div>
-    `;
-
-    // Row display
-    if (list.length === 0) {
-      card.innerHTML += `<div class="text-slate-500 text-xxs italic">Empty Table</div>`;
-    } else {
-      const tblContainer = document.createElement('div');
-      tblContainer.className = 'overflow-x-auto w-full max-h-[200px]';
-
-      const table = document.createElement('table');
-      table.className = 'w-full text-xxs text-left border-collapse';
-
-      const keys = Object.keys(list[0]);
-      
-      // Table Header
-      const thead = document.createElement('thead');
-      const hTr = document.createElement('tr');
-      keys.forEach(k => {
-        const th = document.createElement('th');
-        th.className = 'text-slate-400 font-bold py-1 px-2 border-b border-[#3b378c]/20';
-        th.innerText = k;
-        hTr.appendChild(th);
-      });
-      thead.appendChild(hTr);
-      table.appendChild(thead);
-
-      // Table Body
-      const tbody = document.createElement('tbody');
-      list.slice(0, 5).forEach(row => {
-        const rTr = document.createElement('tr');
-        keys.forEach(k => {
-          const td = document.createElement('td');
-          td.className = 'text-slate-300 font-mono py-1 px-2 max-w-[120px] truncate border-b border-[#3b378c]/10';
-          let cell = row[k];
-          if (cell && typeof cell === 'object') cell = JSON.stringify(cell);
-          td.innerText = cell !== null ? cell : 'NULL';
-          td.title = String(cell);
-          rTr.appendChild(td);
+    try {
+        const response = await fetch('/api/templates', {
+            headers: { 'Authorization': `Bearer ${token}` }
         });
-        tbody.appendChild(rTr);
-      });
-      table.appendChild(tbody);
-      tblContainer.appendChild(table);
-      card.appendChild(tblContainer);
-      
-      if (list.length > 5) {
-        card.innerHTML += `<div class="text-right text-slate-500 text-xxs mt-1 font-semibold">... showing first 5 rows</div>`;
-      }
+        const data = await response.json();
+        if (!data.success) return;
+
+        container.innerHTML = '';
+        const tagColors = {
+            Marketing: 'tag-marketing', Coding: 'tag-coding', Education: 'tag-education',
+            Career: 'tag-career', Creative: 'tag-creative'
+        };
+
+        data.templates.forEach(t => {
+            const card = document.createElement('div');
+            card.className = 'bg-[#25235c] border border-[#3b378c] rounded-xl p-6 shadow-xl flex flex-col justify-between hover:border-indigo-500/40 transition';
+            card.innerHTML = `
+                <div>
+                    <span class="inline-block px-3 py-1 text-xs font-semibold rounded-md mb-3 ${tagColors[t.category] || 'tag-marketing'}">${t.category}</span>
+                    <h3 class="font-bold text-white text-lg mb-2">${t.title}</h3>
+                    <p class="text-slate-400 text-sm mb-4">${t.description}</p>
+                    <div class="bg-[#0A0A1F] border border-[#3b378c] rounded-lg p-3 text-xs text-slate-500 font-mono mb-4 truncate">${t.prompt_text.substring(0, 120)}...</div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-xs text-slate-500">Used ${t.usage_count} times</span>
+                    <button onclick="cloneTemplate(${t.id})" class="bg-indigo-900/40 border border-indigo-500/50 hover:bg-indigo-800 text-indigo-200 text-xs font-bold px-4 py-2 rounded-lg transition">Use Template</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    } catch (err) {
+        container.innerHTML = '<div class="col-span-full text-center py-12 text-red-400">Failed to load templates</div>';
+    }
+}
+
+async function cloneTemplate(templateId) {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+        const response = await fetch(`/api/templates/${templateId}/clone`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        if (data.success) {
+            alert('Template cloned! Opening in Prompts workspace...');
+            navigateTo('/prompts');
+        }
+    } catch (err) {
+        alert('Failed to clone template');
+    }
+}
+
+// ============================================================================
+// SETTINGS VIEW
+// ============================================================================
+async function renderSettings() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+        const response = await fetch('/api/settings/profile', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        if (data.success) {
+            document.getElementById('settings-name').value = data.profile.full_name || '';
+            document.getElementById('settings-email').value = data.profile.email || '';
+            document.getElementById('settings-bio').value = data.profile.bio || '';
+        }
+    } catch (err) {
+        console.error('Failed to load profile:', err);
+    }
+}
+
+async function saveProfile() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const full_name = document.getElementById('settings-name').value.trim();
+    const bio = document.getElementById('settings-bio').value.trim();
+
+    try {
+        const response = await fetch('/api/settings/profile', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ full_name, bio })
+        });
+        const data = await response.json();
+        const msg = document.getElementById('settings-msg');
+        msg.classList.remove('hidden');
+        if (data.success) {
+            msg.className = 'text-xs mt-2 text-green-400';
+            msg.innerText = 'Profile updated successfully!';
+            state.currentUser.username = full_name;
+            sessionStorage.setItem('promptpilot_user', JSON.stringify(state.currentUser));
+            document.getElementById('greet-username').innerText = full_name;
+        } else {
+            msg.className = 'text-xs mt-2 text-red-400';
+            msg.innerText = data.message || 'Update failed';
+        }
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function changePassword() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const current_password = document.getElementById('settings-current-pw').value;
+    const new_password = document.getElementById('settings-new-pw').value;
+
+    if (!current_password || !new_password) {
+        alert('Please fill in both password fields');
+        return;
     }
 
-    inspector.appendChild(card);
-  });
+    try {
+        const response = await fetch('/api/settings/password', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ current_password, new_password })
+        });
+        const data = await response.json();
+        const msg = document.getElementById('settings-msg');
+        msg.classList.remove('hidden');
+        if (data.success) {
+            msg.className = 'text-xs mt-2 text-green-400';
+            msg.innerText = 'Password updated!';
+            document.getElementById('settings-current-pw').value = '';
+            document.getElementById('settings-new-pw').value = '';
+        } else {
+            msg.className = 'text-xs mt-2 text-red-400';
+            msg.innerText = data.message || 'Password update failed';
+        }
+    } catch (err) {
+        console.error(err);
+    }
 }
 
 // ============================================================================
 // WINDOW LOAD INITIALIZATION
 // ============================================================================
 window.addEventListener('DOMContentLoaded', () => {
-  initSession();
+    initSession();
 });
 
+window.addEventListener('popstate', () => {
+    handleRoute();
+});
 
 function handleLogout() {
-    localStorage.removeItem('promptpilot_user');
-
+    localStorage.removeItem('token');
+    sessionStorage.removeItem('promptpilot_user');
     state.currentUser = null;
-
-    document.getElementById('app-shell')?.classList.add('hidden');
-    document.getElementById('auth-screen')?.classList.remove('hidden');
-
-    renderAuthView('signin');
+    window.location.href = '/';
 }

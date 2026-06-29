@@ -1,5 +1,6 @@
 const db = require('../config/database');
 const bcrypt = require('bcrypt');
+const { logActivity } = require('./activityController');
 
 exports.register = async (req, res) => {
     try {
@@ -30,6 +31,8 @@ exports.register = async (req, res) => {
             success: true,
             user: newUser.rows[0]
         });
+
+        logActivity(newUser.rows[0].id, 'account_created', 'User registered');
 
     } catch (error) {
         console.log(error);
@@ -87,6 +90,8 @@ exports.login = async (req, res) => {
                 email: user.rows[0].email
             }
         });
+
+        logActivity(user.rows[0].id, 'login', 'User logged in');
 
     } catch (error) {
         console.log(error);

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PromptPilot — AI-Powered Prompt Analyzer</title>
+    <meta name="description" content="Organize, analyze, and enhance your AI prompts with real-time DeepSeek-powered analysis. Get clarity, grammar, and optimization scores instantly.">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%234F46E5%22/><circle cx=%2250%22 cy=%2245%22 r=%2220%22 fill=%22white%22/><circle cx=%2242%22 cy=%2245%22 r=%224%22 fill=%22%231D1B4F%22/><circle cx=%2258%22 cy=%2245%22 r=%224%22 fill=%22%231D1B4F%22/><rect x=%2238%22 y=%2260%22 width=%2224%22 height=%224%22 rx=%222%22 fill=%22white%22/></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="marketing.css">
+</head>
+<body>
+    <!-- Background Ambient Layer -->
+    <div class="ambient-glow ambient-glow-1"></div>
+    <div class="ambient-glow ambient-glow-2"></div>
+    <div class="grid-overlay"></div>
+
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="/" class="nav-brand">
+                <div class="nav-logo">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="11" width="18" height="10" rx="2"/>
+                        <circle cx="12" cy="5" r="2"/>
+                        <path d="M12 7v4"/>
+                        <line x1="8" y1="16" x2="8" y2="16" stroke-width="3"/>
+                        <line x1="16" y1="16" x2="16" y2="16" stroke-width="3"/>
+                    </svg>
+                </div>
+                <span class="nav-brand-text">Prompt<span class="text-indigo">Pilot</span></span>
+            </a>
+            <div class="nav-links">
+                <a href="#features" class="nav-link">Features</a>
+                <a href="#how-it-works" class="nav-link">How It Works</a>
+                <a href="#templates" class="nav-link">Templates</a>
+                <a href="/login" class="btn btn-ghost">Sign In</a>
+                <a href="/login?signup=1" class="btn btn-primary">Get Started Free</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-badge">
+            <span class="hero-badge-dot"></span>
+            Powered by DeepSeek AI
+        </div>
+        <h1 class="hero-title">
+            Write better prompts.<br>
+            <span class="hero-title-accent">Get better AI results.</span>
+        </h1>
+        <p class="hero-subtitle">
+            PromptPilot analyzes your prompts with AI, scores clarity, grammar, and optimization —<br class="hero-br">then gives you actionable suggestions to improve every single one.
+        </p>
+        <div class="hero-actions">
+            <a href="/login?signup=1" class="btn btn-primary btn-lg">Start Analyzing Free</a>
+            <a href="#features" class="btn btn-ghost btn-lg">See How It Works</a>
+        </div>
+
+        <!-- Hero Visual: Prompt Analysis Demo -->
+        <div class="hero-visual">
+            <div class="hero-card">
+                <div class="hero-card-header">
+                    <div class="hero-card-dots">
+                        <span class="dot dot-red"></span>
+                        <span class="dot dot-yellow"></span>
+                        <span class="dot dot-green"></span>
+                    </div>
+                    <span class="hero-card-label">AI Analysis — Live Preview</span>
+                </div>
+                <div class="hero-card-body">
+                    <div class="hero-prompt-display">
+                        <span class="hero-prompt-label">PROMPT</span>
+                        <span class="hero-prompt-text">Act as a professional copywriter. Write a persuasive email to get an investor for my AI startup...</span>
+                    </div>
+                    <div class="hero-scores">
+                        <div class="hero-score">
+                            <svg class="hero-score-gauge" viewBox="0 0 36 36">
+                                <path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                                <path class="gauge-fill" stroke="#10B981" stroke-dasharray="85,100" stroke-dashoffset="0" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                            </svg>
+                            <div class="hero-score-value">85<span class="hero-score-unit">%</span></div>
+                            <div class="hero-score-name">Clarity</div>
+                        </div>
+                        <div class="hero-score">
+                            <svg class="hero-score-gauge" viewBox="0 0 36 36">
+                                <path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                                <path class="gauge-fill" stroke="#F59E0B" stroke-dasharray="92,100" stroke-dashoffset="0" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                            </svg>
+                            <div class="hero-score-value">92<span class="hero-score-unit">%</span></div>
+                            <div class="hero-score-name">Grammar</div>
+                        </div>
+                        <div class="hero-score">
+                            <svg class="hero-score-gauge" viewBox="0 0 36 36">
+                                <path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                                <path class="gauge-fill" stroke="#8B5CF6" stroke-dasharray="78,100" stroke-dashoffset="0" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                            </svg>
+                            <div class="hero-score-value">78<span class="hero-score-unit">%</span></div>
+                            <div class="hero-score-name">Optimization</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="section-header">
+            <span class="section-eyebrow">CAPABILITIES</span>
+            <h2 class="section-title">Everything you need to craft<br>production-grade prompts</h2>
+            <p class="section-subtitle">From initial draft to production-ready, PromptPilot gives you the tools to iterate, improve, and deploy prompts that get results.</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon" style="background:rgba(79,70,229,0.15);color:#818CF8;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                </div>
+                <h3 class="feature-title">AI-Powered Analysis</h3>
+                <p class="feature-desc">DeepSeek AI evaluates your prompts across three dimensions — clarity, grammar, and optimization — with specific, actionable suggestions.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon" style="background:rgba(16,185,129,0.15);color:#34D399;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <h3 class="feature-title">Version History</h3>
+                <p class="feature-desc">Every edit is preserved in an immutable ledger. Roll back to any previous version, compare changes, and track how your prompts evolve.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon" style="background:rgba(245,158,11,0.15);color:#FBBF24;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/></svg>
+                </div>
+                <h3 class="feature-title">Prompt Templates</h3>
+                <p class="feature-desc">Start with battle-tested templates for marketing, coding, education, career, and creative tasks. Clone, customize, and make them your own.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon" style="background:rgba(139,92,246,0.15);color:#A78BFA;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                </div>
+                <h3 class="feature-title">Export & Share</h3>
+                <p class="feature-desc">Export your best prompts as formatted text files. Share them with your team or deploy them directly into your AI workflow.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section id="how-it-works" class="how-it-works">
+        <div class="section-header">
+            <span class="section-eyebrow">WORKFLOW</span>
+            <h2 class="section-title">From draft to optimized<br>in three steps</h2>
+        </div>
+        <div class="steps">
+            <div class="step">
+                <div class="step-number">1</div>
+                <h3 class="step-title">Write or choose a template</h3>
+                <p class="step-desc">Start from scratch with your prompt idea, or pick one of our pre-built templates for common tasks like SEO writing, code review, or lesson planning.</p>
+            </div>
+            <div class="step-divider"></div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <h3 class="step-title">Analyze with DeepSeek AI</h3>
+                <p class="step-desc">One click runs your prompt through our AI analysis engine. You get instant scores for clarity, grammar, and optimization with specific improvement tips.</p>
+            </div>
+            <div class="step-divider"></div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <h3 class="step-title">Improve and deploy</h3>
+                <p class="step-desc">Apply the suggestions, track every version in your history ledger, and export the final prompt ready for use in ChatGPT, Claude, or any AI tool.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats">
+        <div class="stats-grid">
+            <div class="stat">
+                <div class="stat-value">3<span class="stat-value-accent">D</span></div>
+                <div class="stat-label">Analysis Dimensions</div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat">
+                <div class="stat-value">5+</div>
+                <div class="stat-label">Prompt Templates</div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat">
+                <div class="stat-value">&lt;2s</div>
+                <div class="stat-label">Analysis Speed</div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat">
+                <div class="stat-value">24/7</div>
+                <div class="stat-label">Cloud Availability</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Templates Preview -->
+    <section id="templates" class="templates-preview">
+        <div class="section-header">
+            <span class="section-eyebrow">TEMPLATES</span>
+            <h2 class="section-title">Start with a proven foundation</h2>
+            <p class="section-subtitle">Each template is designed by prompt engineers and ready to customize for your specific use case.</p>
+        </div>
+        <div class="template-cards">
+            <div class="template-card">
+                <div class="template-card-tag tag-marketing">Marketing</div>
+                <h3 class="template-card-title">SEO Blog Post</h3>
+                <p class="template-card-desc">Generate SEO-optimized blog posts with meta descriptions, keywords, and structured sections.</p>
+                <div class="template-card-preview">Act as an expert SEO content writer. Write a blog post about [topic] targeting [audience]...</div>
+            </div>
+            <div class="template-card">
+                <div class="template-card-tag tag-coding">Coding</div>
+                <h3 class="template-card-title">Code Review</h3>
+                <p class="template-card-desc">Get comprehensive code reviews covering bugs, performance, security, and architecture.</p>
+                <div class="template-card-preview">Act as a senior software engineer. Review the following code for bugs, performance...</div>
+            </div>
+            <div class="template-card">
+                <div class="template-card-tag tag-education">Education</div>
+                <h3 class="template-card-title">Lesson Plan</h3>
+                <p class="template-card-desc">Create structured lesson plans with objectives, activities, and assessment methods.</p>
+                <div class="template-card-preview">Act as an experienced educator. Create a lesson plan for [subject] targeting [grade]...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="cta-card">
+            <h2 class="cta-title">Ready to write better prompts?</h2>
+            <p class="cta-subtitle">Join thousands of prompt engineers, developers, and content creators who use PromptPilot to get more from AI.</p>
+            <a href="/login?signup=1" class="btn btn-primary btn-lg">Get Started — It's Free</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <span class="footer-logo">Prompt<span class="text-indigo">Pilot</span></span>
+                <p class="footer-desc">AI-powered prompt analysis and optimization platform.</p>
+            </div>
+            <div class="footer-links">
+                <div class="footer-col">
+                    <h4>Product</h4>
+                    <a href="#features">Features</a>
+                    <a href="#how-it-works">How It Works</a>
+                    <a href="#templates">Templates</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Company</h4>
+                    <a href="#">About</a>
+                    <a href="#">Privacy</a>
+                    <a href="#">Terms</a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span>&copy; 2026 PromptPilot. All rights reserved.</span>
+        </div>
+    </footer>
+
+    <script src="marketing.js"></script>
+</body>
+</html>
