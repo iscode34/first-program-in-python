@@ -681,7 +681,18 @@ async function handleSignUp(e) {
 
 function navigateTo(path) {
     window.history.pushState({}, '', path);
+    closeMobileSidebar();
     handleRoute();
+}
+
+function closeMobileSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    if (sidebar) {
+        sidebar.classList.remove('open');
+        sidebar.classList.add('closed');
+    }
+    if (backdrop) backdrop.classList.remove('visible');
 }
 
 function handleRoute() {
@@ -1689,6 +1700,28 @@ async function changePassword() {
         }
     } catch (err) {
         console.error(err);
+    }
+}
+
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    const isMobile = window.innerWidth < 1024;
+
+    if (isMobile) {
+        const isOpen = sidebar.classList.contains('open');
+        if (isOpen) {
+            sidebar.classList.remove('open');
+            sidebar.classList.add('closed');
+            if (backdrop) backdrop.classList.remove('visible');
+        } else {
+            sidebar.classList.remove('closed');
+            sidebar.classList.add('open');
+            if (backdrop) backdrop.classList.add('visible');
+        }
+    } else {
+        const shell = document.getElementById('app-shell');
+        shell.classList.toggle('sidebar-collapsed');
     }
 }
 
