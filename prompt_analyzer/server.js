@@ -13,6 +13,18 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'marketing.html'));
+});
+
+const SPA_ROUTES = ['/login', '/dashboard', '/prompts', '/settings', '/templates'];
+
+SPA_ROUTES.forEach(route => {
+    app.get(route, (req, res) => {
+        res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    });
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/api/test', (req, res) => {
@@ -25,18 +37,6 @@ app.use('/api/prompts', require('./routes/promptRoutes'));
 app.use('/api/templates', require('./routes/templateRoutes'));
 app.use('/api/settings', require('./routes/settingsRoutes'));
 app.use('/api/activity', require('./routes/activityRoutes'));
-
-const SPA_ROUTES = ['/login', '/dashboard', '/prompts', '/settings', '/templates'];
-
-SPA_ROUTES.forEach(route => {
-    app.get(route, (req, res) => {
-        res.sendFile(path.join(__dirname, 'public', 'index.html'));
-    });
-});
-
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'marketing.html'));
-});
 
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
